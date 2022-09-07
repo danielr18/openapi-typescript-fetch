@@ -237,12 +237,13 @@ describe('fetch', () => {
       .method('post')
       .create({ scalar: 1 })
 
-    const captured = { url: '', body: '' }
+    const captured = { path: '', url: '', body: '' }
 
-    fetcher.use(async (url, init, next) => {
+    fetcher.use(async (url, init, next, request) => {
       init.headers.set('mw1', 'true')
 
       captured.url = url
+      captured.path = request.path
       captured.body = init.body as string
 
       const response = await next(url, init)
@@ -269,5 +270,6 @@ describe('fetch', () => {
     expect(data.headers.mw1).toEqual('true')
     expect(captured.url).toEqual('https://api.backend.dev/bodyquery/1?scalar=a')
     expect(captured.body).toEqual('{"list":["b","c"]}')
+    expect(captured.path).toEqual('/bodyquery/{id}')
   })
 })

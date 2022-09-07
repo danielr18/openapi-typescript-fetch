@@ -13,6 +13,7 @@ import {
   Request,
   _TypedFetch,
   TypedFetch,
+  MiddlewareRequest,
 } from './types'
 
 const sendBody = (method: Method) =>
@@ -176,19 +177,27 @@ function wrapMiddlewares(middlewares: Middleware[], fetch: Fetch): Fetch {
     index: number,
     url: string,
     init: CustomRequestInit,
+    middlewareRequest: MiddlewareRequest,
   ) => Promise<ApiResponse>
 
-  const handler: Handler = async (index, url, init) => {
+  const handler: Handler = async (index, url, init, middlewareRequest) => {
     if (middlewares == null || index === middlewares.length) {
       return fetch(url, init)
     }
     const current = middlewares[index]
-    return await current(url, init, (nextUrl, nextInit) =>
-      handler(index + 1, nextUrl, nextInit),
+    return await current(
+      url,
+      init,
+      (nextUrl, nextInit) =>
+        handler(index + 1, nextUrl, nextInit, middlewareRequest),
+      middlewareRequest,
     )
   }
 
-  return (url, init) => handler(0, url, init)
+  return function (this: Request, url, init) {
+    const { fetch: _fetch, init: _init, ...middlewareRequest } = this
+    return handler(0, url, init, middlewareRequest)
+  }
 }
 
 async function fetchUrl<R>(request: Request) {

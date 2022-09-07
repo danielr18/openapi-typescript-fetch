@@ -121,10 +121,12 @@ export type CreateFetch<M, OP> = M extends 'post' | 'put' | 'patch' | 'delete'
     : _CreateFetch<OP>
   : _CreateFetch<OP>
 
+export type MiddlewareRequest = Omit<Request, 'init' | 'fetch'>
 export type Middleware = (
   url: string,
   init: CustomRequestInit,
   next: Fetch,
+  request: MiddlewareRequest,
 ) => Promise<ApiResponse>
 
 export type FetchConfig = {
